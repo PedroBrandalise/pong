@@ -5,6 +5,11 @@
 #define CIMA 1
 #define BAIXO -1
 
+
+//definir os pinos
+#define pinoBotao1 D8
+#define pinoBotao2 D7
+
 void inicializacao();
 void recebeComandos();
 void logica();
@@ -19,6 +24,8 @@ int diry = CIMA;
 void setup() {
   inicializacao();
   Serial.begin(57600);
+  pinMode(pinoBotao1, INPUT );
+  pinMode(pinoBotao2, INPUT );
 
 }
 
@@ -48,15 +55,24 @@ void inicializacao(){
 
 void recebeComandos(){
    char controle= getchar();
-   // if(cin >> controle){
-
-   // if (controle == 'a'){
-   //   posicaoRaqueteY--;
-   // }else if (controle == 'd')
-   // {
-   //   posicaoRaqueteY++;
-   // }
-   // }
+   
+   if(digitalRead(pinoBotao1)== HIGH ) {
+    if(posicaoRaqueteY == TAMMY-2){
+      
+    }else{
+      posicaoRaqueteY++;
+    }
+    
+    Serial.println(">");
+    }
+   if(digitalRead(pinoBotao2)== HIGH ) {
+    if(posicaoRaqueteY == 1){
+      
+    }else{
+      posicaoRaqueteY--;
+    }
+    Serial.println("<");
+   }
 }
 
 void logica(){
@@ -120,8 +136,13 @@ void escreveTela(){
       }
     }
     //cout << endl;           
-    Serial.print("\n");
+    Serial.print("\n\r");
    } 
+   Serial.write(12);
+   Serial.write(13);
+   
+    
+
 
    //system("clear");
 
