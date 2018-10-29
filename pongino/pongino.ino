@@ -31,7 +31,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(50);
+  //delay(50);
   recebeComandos();
   logica();
   escreveTela();
@@ -138,8 +138,12 @@ void escreveTela(){
     //cout << endl;           
     Serial.print("\n\r");
    } 
+   for(int i=0; i<20; i++){
+    Serial.println('.');
+   }
    Serial.write(12);
    Serial.write(13);
+   Serial.write("\033c");
    
     
 
