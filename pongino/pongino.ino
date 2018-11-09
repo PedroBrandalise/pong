@@ -16,17 +16,28 @@ int TAMMY;
 //definir os pinos
 #define pinoBotao1 D8
 #define pinoBotao2 D7
+#define SDA_PIN       D3 //d1
+#define SCL_PIN       D5 //d2
+#define ENDERECO_OLED 0x3C
+
 
 //display
-SSD1306Wire  display(0x3c, D3, D5);
+SSD1306Wire display(ENDERECO_OLED, SDA_PIN, SCL_PIN); // SDA, SCL -> Configuracao do display SSD1306
+
+//SSD1306Wire  display(0x3c, D3, D5);
 #define BOLA_TAM 1
 #define R_TAM 8
+#define R_ALTURA 2
 
 void inicializacao();
 void recebeComandos();
 void logica();
 void escreveTela();
 void desenhaTela();
+void ricocheteX();
+void ricocheteY();
+void teto();
+void gameOver();
 
 //char matrix[TAMMX][TAMMY];
 
@@ -36,16 +47,23 @@ int posicaoX;
 int posicaoY;
 int posicaoRaqueteX;
 int posicaoRaqueteY;
+int incX;
+int incY;
 
 
 void setup() {
+  
   TAMMX = display.getWidth(); 
   TAMMY = display.getHeight();
   posicaoX= TAMMX-3, posicaoY= TAMMY/2;
   posicaoRaqueteX= R_TAM, posicaoRaqueteY = 0;
+
+  incX = 1;
+  incY = 1;
   
   //inicializacao();
   Serial.begin(57600);
+  
   pinMode(pinoBotao1, INPUT );
   pinMode(pinoBotao2, INPUT );
 
@@ -67,48 +85,59 @@ void loop() {
   desenhaTela();
   delay(20);
 }
-/*
-void inicializacao(){
-  for (int i = 0; i < TAMMX; ++i)
-   {
-    for (int j = 0; j < TAMMY; ++j)
-    {
-      if(i==0 || i == TAMMX-1 || j==0 || j ==TAMMY-1 ){
-        matrix[i][j]='#';
-      }
-      else{
-        matrix[i][j] = '.';
-      }
-    }
-   } 
-   //matrix[posicaoX][posicaoY]= 'o';
-}
-*/
+
 
 void recebeComandos(){
    char controle= getchar();
    
    if(digitalRead(pinoBotao1)== HIGH ) {
-    if(posicaoRaqueteX <= TAMMX-2){
+    if(posicaoRaqueteX == TAMMX-2){
       
     }else{
-      posicaoRaqueteX+=2;
+      posicaoRaqueteX++;
     }
     
     Serial.println(">");
     }
    if(digitalRead(pinoBotao2)== HIGH ) {
-    if(posicaoRaqueteX >= 1){
-      
-    }else{
-      posicaoRaqueteX-=2;
-    }
-    Serial.println("<");
+      Serial.println("<");
+      //Serial.println(posicaoRaqueteX);
+      if(posicaoRaqueteX == 1){
+        
+      }else{
+        posicaoRaqueteX--;
+      }
    }
 }
 
+/*int dirx = ESQUERDA;
+int diry = CIMA;
+int posicaoX;
+int posicaoY;
+int posicaoRaqueteX;
+int posicaoRaqueteY;*/
+
 void logica(){
-   // cout << posicaoX;
+  if(posicaoY == 0){
+    gameOver();
+  }
+
+  
+  if(posicaoY-BOLA_TAM == posicaoRaqueteY + R_ALTURA ){
+    
+    if(posicaoRaqueteX + R_TAM >= posicaoX && posicaoRaqueteX - R_TAM <= posicaoX){
+      Serial.println("pong");
+        ricocheteY();
+
+    }
+    
+    
+  }
+
+  if(posicaoX - BOLA_TAM  == 1 || posicaoX + BOLA_TAM == TAMMX ){
+    ricocheteX();
+  }
+  /*
   if (dirx==ESQUERDA){
     
     if (posicaoX==1)
@@ -145,58 +174,63 @@ void logica(){
       posicaoY++;
     }
   }
+  */
+  if(posicaoY == TAMMY){
+    teto();
+  }
 
+  posicaoX += incX;
+  posicaoY += incY;
 }
 
-/*
-void escreveTela(){
-  
-  for (int i = 0; i < TAMMX; ++i)
-   {
-    for (int j = 0; j < TAMMY; ++j)
-    {
-      if(i==posicaoX && j == posicaoY){
-        Serial.print('o');
-      }
-      else if (i==posicaoRaqueteX && j == posicaoRaqueteY  )
-      {
-        Serial.print('~');
-      }
+  /*if (dirx==DIREITA){
+    dirx=ESQUERDA;
+  }else{
+    dirx=DIREITA;
+  }
+  if (diry==CIMA){
+    dirx=BAIXO;
+  }else{
+    dirx=CIMA;
+  }
+  */
 
-      else{
-        Serial.print(matrix[i][j]) ;
-      }
-    }
-    //cout << endl;           
-    Serial.print("\n\r");
-   } 
-   for(int i=0; i<20; i++){
-    Serial.println('.');
-   }
-   Serial.write(12);
-   Serial.write(13);
-   Serial.write("\033c");
-   
-    
-
-
-   //system("clear");
-
-  
-
+void ricocheteX(){
+  incX *= -1; 
 }
-*/
+
+void ricocheteY(){
+  incY *= -1;
+}
+
+void teto(){
+  incY *= -1;
+}
+
+void gameOver(){
+  
+  posicaoY = TAMMY - 2;
+  display.clear();
+  display.flipScreenVertically();
+  display.drawString(0, 26, "game over");
+  display.display();
+
+  delay(2000);
+  display.flipScreenVertically();
+}
 
 void desenhaTela(){
   display.clear();
   //desenha a bolinha
   display.drawCircle(posicaoX, posicaoY, BOLA_TAM);
   //desenha duas requeti
-  display.drawRect(posicaoRaqueteX -R_TAM, posicaoRaqueteY, 2 * R_TAM, 2);
+  display.drawRect(posicaoRaqueteX -R_TAM, posicaoRaqueteY, 2 * R_TAM, R_ALTURA);
     
   //display.drawRect(0, 0, 16, 2);
   display.display();
 }
+
+
 
 
 
